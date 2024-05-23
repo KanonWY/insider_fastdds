@@ -1,6 +1,15 @@
 ## DataWriter
 
-DataWriter 恰好附加到一个充当其工厂的发布者。此外，每个 DataWriter 自创建以来就绑定到一个主题。该主题必须在创建 DataWriter 之前存在，并且必须绑定到 DataWriter 想要发布的数据类型。
+#### 结构
+
+```c++
+class DataWriter : public DomainEntity
+{
+  ...
+};
+```
+
+此外，每个 DataWriter 自创建以来就绑定到一个主题 (Topic)。该主题必须在创建 DataWriter 之前存在，并且必须绑定到 DataWriter 想要发布的数据类型。
 
 在发布者中为特定主题创建新的 DataWriter 的效果是使用该主题描述的名称和数据类型启动新发布。
 

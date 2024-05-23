@@ -2,7 +2,17 @@
 
 发布者代表属于它的一个或多个 DataWriter 对象进行操作。它充当一个容器，允许在发布者的 PublisherQos 给出的通用配置下对不同的 DataWriter 对象进行分组。
 
-FastDDS 中为了保持接口的稳定性，采用了大量的 pImp 写法。
+
+
+```c++
+class Publisher : public DomainEntity
+{
+  protected:
+  	PublisherImpl* impl_;	// 具体实现
+};
+```
+
+
 
 ```c++
     //! Map of Pointers to the associated Data Writers. Topic name is the key.
@@ -21,20 +31,21 @@ PublisherQos 控制了 Publisher 的行为。
 
 #### PublisherListerner
 
-PublisherListener 是一个抽象类，定义了响应发布服务器上的状态更改而触发的回调。默认情况下，所有这些回调都是空的并且不执行任何操作。
-
-用户应该实现此类的专门化，以覆盖应用程序所需的回调。未被覆盖的回调将保持其空实现。
-
-PublisherListener 继承自 DataWriterListener。因此，它能够对报告给 DataWriter 的所有事件做出反应。
+PublisherListener 继承自 DataWriterListener。因此，它能够对报告给 DataWriter 的所有事件做出反应，并且它自己没有任何新的注册回调。
 
 由于事件始终会通知到可以处理该事件的**最具体的实体侦听器**，***因此仅当触发的 DataWriter 没有附加侦听器，或者回调被 DataWriter 上的 StatusMask 禁用时***，才会调用 PublisherListener 从 DataWriterListener 继承的回调。
+
+```c++
+class PublisherListener: public DataWriterListener
+{
+};
+```
 
 #### 创建 Publisher
 
 使用 Participant 来创建 Publisher
 
 ```c++
-// Create a DomainParticipant in the desired domain
 DomainParticipant* participant =
         DomainParticipantFactory::get_instance()->create_participant(0, PARTICIPANT_QOS_DEFAULT);
 if (nullptr == participant)
@@ -43,8 +54,7 @@ if (nullptr == participant)
     return;
 }
 
-// Create a Publisher with default PublisherQos and no Listener
-// The value PUBLISHER_QOS_DEFAULT is used to denote the default QoS.
+// 创建默认 QOS 的 publisher
 Publisher* publisher_with_default_qos =
         participant->create_publisher(PUBLISHER_QOS_DEFAULT);
 if (nullptr == publisher_with_default_qos)
@@ -53,7 +63,9 @@ if (nullptr == publisher_with_default_qos)
     return;
 }
 
-// A custom PublisherQos can be provided to the creation method
+
+/////////////////////////////////////////////
+// 手动修改 QOS 来创建
 PublisherQos custom_qos;
 
 // Modify QoS attributes
@@ -67,9 +79,9 @@ if (nullptr == publisher_with_custom_qos)
     return;
 }
 
-// Create a Publisher with default QoS and a custom Listener.
-// CustomPublisherListener inherits from PublisherListener.
-// The value PUBLISHER_QOS_DEFAULT is used to denote the default QoS.
+
+////////////////////////////////////////////
+/// 注册监听回调
 CustomPublisherListener custom_listener;
 Publisher* publisher_with_default_qos_and_custom_listener =
         participant->create_publisher(PUBLISHER_QOS_DEFAULT, &custom_listener);
@@ -83,10 +95,10 @@ if (nullptr == publisher_with_default_qos_and_custom_listener)
 基于配置文件的发布者创建
 
 ```c++
-// First load the XML with the profiles
+// 加载配置文件
 DomainParticipantFactory::get_instance()->load_XML_profiles_file("profiles.xml");
 
-// Create a DomainParticipant in the desired domain
+
 DomainParticipant* participant =
         DomainParticipantFactory::get_instance()->create_participant(0, PARTICIPANT_QOS_DEFAULT);
 if (nullptr == participant)
@@ -95,7 +107,7 @@ if (nullptr == participant)
     return;
 }
 
-// Create a Publisher using a profile and no Listener
+// 使用配置文件创建
 Publisher* publisher_with_profile =
         participant->create_publisher_with_profile("publisher_profile");
 if (nullptr == publisher_with_profile)
@@ -104,8 +116,8 @@ if (nullptr == publisher_with_profile)
     return;
 }
 
-// Create a Publisher using a profile and a custom Listener.
-// CustomPublisherListener inherits from PublisherListener.
+////////////////////////////////////////////////
+///// 注册监听回调
 CustomPublisherListener custom_listener;
 Publisher* publisher_with_profile_and_custom_listener =
         participant->create_publisher_with_profile("publisher_profile", &custom_listener);
